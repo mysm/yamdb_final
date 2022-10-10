@@ -17,8 +17,8 @@ class Command(BaseCommand):
             '--model',
             type=str,
             required=True,
-            help='model name in the format application_name.model_name, \
-                for example reviews.User')
+            help='model name in the format application_name.model_name,'
+                 + ' for example reviews.User')
 
     def handle(self, *args, **options):
         csv_file = options['csv_file']
