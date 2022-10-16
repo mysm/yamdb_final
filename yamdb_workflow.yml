@@ -26,7 +26,6 @@ jobs:
       run: |
         # запуск проверки проекта по flake8
         python -m flake8
-        pytest
 
   send_message_test:
     runs-on: ubuntu-latest
@@ -56,8 +55,10 @@ jobs:
         - name: Push to Docker Hub
           uses: docker/build-push-action@v2
           with:
+            context: api_yamdb/
+            file: ./api_yamdb/Dockerfile
             push: true
-            tags: ${{ secrets.DOCKER_USERNAME }}/infra_actions:latest
+            tags: ${{ secrets.DOCKER_USERNAME }}/api_yamdb:latest
 
   send_message_build_and_push_to_docker_hub:
     runs-on: ubuntu-latest
@@ -68,14 +69,14 @@ jobs:
       with:
         to: ${{ secrets.TELEGRAM_TO }}
         token: ${{ secrets.TELEGRAM_TOKEN }}
-        message: ${{ github.workflow }}. Сборка и отпрака в докер выполнены!
+        message: ${{ github.workflow }}. Сборка и отправка в докер выполнены!
 
 
   deploy:
-      if: ${{GITHUB_REF_NAME}} == 'master' || ${{GITHUB_REF_NAME}} == 'main'
-      runs-on: ubuntu-latest
-      needs: build_and_push_to_docker_hub
-      steps:
+    if: github.ref_name == 'master' || github.ref_name == 'main'
+    runs-on: ubuntu-latest
+    needs: build_and_push_to_docker_hub
+    steps:
       - name: executing remote ssh commands to deploy
         uses: appleboy/ssh-action@master
         with:
@@ -84,11 +85,18 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           passphrase: ${{ secrets.PASSPHRASE }}
           script: |
-            # Выполняет pull образа с DockerHub
-            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/infra_actions
-            #остановка всех контейнеров
-            sudo docker stop $(sudo docker ps -a -q)
-            sudo docker run --rm -d -p 5000:5000 ${{ secrets.DOCKER_USERNAME }}/infra_actions
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/api_yamdb:latest 
+            sudo docker-compose stop
+            sudo docker-compose rm web
+            cd yamdb_final/infra
+            touch .env
+            echo DB_ENGINE=${{ secrets.DB_ENGINE }} >> .env
+            echo DB_NAME=${{ secrets.DB_NAME }} >> .env
+            echo POSTGRES_USER=${{ secrets.POSTGRES_USER }} >> .env
+            echo POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} >> .env
+            echo DB_HOST=${{ secrets.DB_HOST }} >> .env
+            echo DB_PORT=${{ secrets.DB_PORT }} >> .env
+            sudo docker-compose up -d 
 
   send_message:
     runs-on: ubuntu-latest
