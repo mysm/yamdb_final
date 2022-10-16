@@ -86,7 +86,6 @@ jobs:
           passphrase: ${{ secrets.PASSPHRASE }}
           script: |
             pwd
-            ls
             sudo docker-compose stop
             sudo docker-compose rm web
             touch .env
