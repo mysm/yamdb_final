@@ -4,6 +4,9 @@
 ## Статус проекта
 ![Workflow status](https://github.com/mysm/yamdb_final/actions/workflows/yamdb_workflow.yml/badge.svg)
 
+## Адрес размещения и документация
+ http://178.154.228.12/redoc
+
 ## Описание
 
 Проект **YaMDb** собирает отзывы пользователей на различные произведения.
